@@ -1,7 +1,17 @@
-# OmniRoute Configuration
-# This is a placeholder config for the Home Assistant Add-on.
-
-# You can add your provider API keys here or via environment variables.
-
-# Example:
-# OMNIROUTE_PROVIDERS_DEEPSEEK_API_KEY=your_key
+name: OmniRoute
+version: 3.8.46
+slug: omniroute
+description: Free AI Gateway - one endpoint, 250+ providers
+url: https://github.com/diegoasanch/omniroute
+arch:
+- amd64
+- armv7
+- aarch64
+ports:
+  20128/tcp: 20128
+map:
+- data:rw
+options:
+  omniroute_memory_mb: 1024
+schema:
+  omniroute_memory_mb: int
