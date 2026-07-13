@@ -2,7 +2,7 @@
 # This Dockerfile is designed for a Home Assistant Add-on.
 # It uses the existing OmniRoute image to ensure stability and ease of use.
 
-FROM diegosouzapw/omniroute:latest
+FROM diegosouzapw/omniroute:v3.8.46
 
 # Home Assistant add-ons usually run as root or a specific user.
 # The OmniRoute image uses 'node'. We'll ensure the directory exists.
