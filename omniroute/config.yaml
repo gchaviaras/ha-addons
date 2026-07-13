@@ -1,0 +1,7 @@
+# OmniRoute Configuration
+# This is a placeholder config for the Home Assistant Add-on.
+
+# You can add your provider API keys here or via environment variables.
+
+# Example:
+# OMNIROUTE_PROVIDERS_DEEPSEEK_API_KEY=your_key

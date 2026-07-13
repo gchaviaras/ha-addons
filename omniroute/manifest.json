@@ -1,0 +1,29 @@
+{
+  "name": "OmniRoute",
+  "version": "1.0.0",
+  "slug": "omniroute",
+  "description": "Free AI Gateway: one endpoint, 250+ providers.",
+  "arch": [
+    "amd64",
+    "armv7",
+    "aarch64"
+  ],
+  "startup": "{}",
+  "options": {
+    "omniroute_memory_mb": {
+      "name": "Memory Limit (MB)",
+      "description": "The maximum memory OmniRoute can use.",
+      "default": 1024,
+      "selector": "number"
+    }
+  },
+  "ports": {
+    "20128/tcp": {
+      "description": "OmniRoute API Port"
+    }
+  },
+  "schema": "addon_schema",
+  "host_network": [],
+  "map": [],
+  "is_blocking": false
+}
