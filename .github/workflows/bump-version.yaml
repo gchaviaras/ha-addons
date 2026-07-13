@@ -1,0 +1,45 @@
+---
+name: Bump Music Assistant Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to bump to (e.g., 2.10.0b3)'
+        required: true
+        type: string
+
+jobs:
+  bump-version:
+    name: Update Music Assistant addon version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Update version files
+        run: |
+          VERSION="${{ inputs.version }}"
+          
+          sed -i "s/^version: .*/version: ${VERSION}/" music_assistant_beta/config.yaml
+          
+          sed -i "s|FROM ghcr.io/music-assistant/server:.*|FROM ghcr.io/music-assistant/server:${VERSION}|" music_assistant_beta/Dockerfile
+          
+          sed -i "s|ghcr.io/\${{ github.repository_owner }}/mass-server:.*|ghcr.io/\${{ github.repository_owner }}/mass-server:${VERSION}|" .github/workflows/release.yaml
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Bump Music Assistant version to ${{ inputs.version }}"
+          branch: bump-version-${{ inputs.version }}
+          delete-branch: true
+          title: "Bump Music Assistant version to ${{ inputs.version }}"
+          body: |
+            Automated version bump to ${{ inputs.version }}
+            
+            Updated files:
+            - `music_assistant_beta/config.yaml`
+            - `music_assistant_beta/Dockerfile`
+            - `.github/workflows/release.yaml`
