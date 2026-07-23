@@ -36,7 +36,6 @@ from music_assistant_models.media_items import (
     Album,
     Artist,
     AudioFormat,
-    BrowseFolder,
     ItemMapping,
     MediaItemImage,
     MediaItemType,
@@ -62,7 +61,6 @@ from music_assistant.constants import (
 from music_assistant.controllers.cache import use_cache
 from music_assistant.helpers.util import infer_album_type, install_package, parse_title_and_version
 from music_assistant.models.music_provider import MusicProvider
-from music_assistant.models.recommendation_payload import RecommendationPayloadMixin
 
 from .helpers import (
     YTMSearchFilter,
@@ -175,29 +173,22 @@ async def get_config_entries(
     """
     return (
         CONF_ENTRY_UNOFFICIAL_PROVIDER,
-        ConfigEntry(
-            key=CONF_USERNAME,
-            type=ConfigEntryType.STRING,
-            required=True,
-            label="config_entries.username.label",
-        ),
+        ConfigEntry(key=CONF_USERNAME, type=ConfigEntryType.STRING, required=True),
         ConfigEntry(
             key=CONF_COOKIE,
             type=ConfigEntryType.SECURE_STRING,
             required=True,
-            label="config_entries.cookie.label",
         ),
         ConfigEntry(
             key=CONF_PO_TOKEN_SERVER_URL,
             type=ConfigEntryType.STRING,
             default_value=DEFAULT_PO_TOKEN_SERVER_URL,
             required=True,
-            label="config_entries.po_token_server_url.label",
         ),
     )
 
 
-class YoutubeMusicProvider(MusicProvider, RecommendationPayloadMixin):
+class YoutubeMusicProvider(MusicProvider):
     """Provider for Youtube Music."""
 
     _headers: dict[str, str]
@@ -689,34 +680,9 @@ class YoutubeMusicProvider(MusicProvider, RecommendationPayloadMixin):
             stream_details.audio_format.sample_rate = int(asr)
         return stream_details
 
-    async def get_recommendations(self) -> list[RecommendationFolder]:
-        """Get this provider's available recommendation rows, without items."""
-        rows = await self._recommendation_rows_from_payload()
-        rows.append(
-            RecommendationFolder(
-                name="Mixed for you",
-                translation_key="mixed_for_you",
-                item_id=f"{self.instance_id}_mixed_for_you",
-                provider=self.instance_id,
-                icon="mdi:shuffle-variant",
-            )
-        )
-        return rows
-
-    async def get_recommendation_items(
-        self, item_id: str
-    ) -> UniqueList[MediaItemType | ItemMapping | BrowseFolder]:
-        """
-        Get the items for a single recommendation row.
-
-        :param item_id: The item_id of the row, as returned by get_recommendations.
-        """
-        if item_id == f"{self.instance_id}_mixed_for_you":
-            return (await self._get_mixed_for_you_folder()).items
-        return await self._recommendation_items_from_payload(item_id)
-
-    async def _fetch_recommendation_payload(self) -> list[RecommendationFolder]:
-        """Fetch the home feed and parse its sections into recommendation folders with items."""
+    @use_cache(3600)
+    async def recommendations(self) -> list[RecommendationFolder]:
+        """Get available recommendations."""
         recommendations = await get_home(self._headers, self.language, user=self._yt_user)
 
         def _parse_sections() -> list[RecommendationFolder]:
@@ -766,14 +732,19 @@ class YoutubeMusicProvider(MusicProvider, RecommendationPayloadMixin):
                         continue
                     else:
                         self.logger.warning(
-                            "Unknown item type in recommendation folder: %s",
-                            recommended_item,
+                            "Unknown item type in recommendation folder: %s", recommended_item
                         )
                         continue
                 folders.append(folder)
             return folders
 
-        return await asyncio.to_thread(_parse_sections)
+        folders = await asyncio.to_thread(_parse_sections)
+        # Also add personalized mixes if available
+        mixed_for_you_folder = await self._get_mixed_for_you_folder()
+        if mixed_for_you_folder.items:
+            folders.append(mixed_for_you_folder)
+
+        return folders
 
     @use_cache(3600 * 24, allow_expired_cache=True)  # Cache for 24 hours
     async def _get_mixed_for_you_folder(self) -> RecommendationFolder:
