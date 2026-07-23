@@ -29,7 +29,7 @@ jobs:
           if [ "${{ inputs.addon }}" = "music_assistant_beta" ]; then
             echo 'matrix={"include":[{"addon":"music_assistant_beta","name":"Music Assistant","config_path":"music_assistant_beta/config.yaml","dockerfile_path":"music_assistant_beta/Dockerfile","image_pattern":"FROM ghcr.io/music-assistant/server:.*"}]}' >> $GITHUB_OUTPUT
           else
-            echo 'matrix={"include":[{"addon":"omniroute","name":"OmniRoute","config_path":"omniroute/config.yaml","dockerfile_path":"omniroute/Dockerfile","image_pattern":"FROM diegosouzapw/omniroute:v.*"}]}' >> $GITHUB_OUTPUT
+            echo 'matrix={"include":[{"addon":"omniroute","name":"OmniRoute","config_path":"omniroute/config.yaml","dockerfile_path":"omniroute/Dockerfile","image_pattern":"FROM diegosouzapw/omniroute:.*"}]}' >> $GITHUB_OUTPUT
           fi
 
   bump-version:
