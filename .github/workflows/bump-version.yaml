@@ -17,31 +17,35 @@ on:
         type: string
 
 jobs:
+  compute-matrix:
+    name: Compute matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          if [ "${{ inputs.addon }}" = "music_assistant_beta" ]; then
+            echo 'matrix={"include":[{"addon":"music_assistant_beta","name":"Music Assistant","config_path":"music_assistant_beta/config.yaml","dockerfile_path":"music_assistant_beta/Dockerfile","image_pattern":"FROM ghcr.io/music-assistant/server:.*"}]}' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix={"include":[{"addon":"omniroute","name":"OmniRoute","config_path":"omniroute/config.yaml","dockerfile_path":"omniroute/Dockerfile","image_pattern":"FROM diegosouzapw/omniroute:v.*"}]}' >> $GITHUB_OUTPUT
+          fi
+
   bump-version:
     name: Update ${{ matrix.name }} addon version
+    needs: compute-matrix
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     strategy:
-      matrix:
-        include:
-          - addon: music_assistant_beta
-            name: Music Assistant
-            config_path: music_assistant_beta/config.yaml
-            dockerfile_path: music_assistant_beta/Dockerfile
-            image_pattern: "FROM ghcr.io/music-assistant/server:.*"
-          - addon: omniroute
-            name: OmniRoute
-            config_path: omniroute/config.yaml
-            dockerfile_path: omniroute/Dockerfile
-            image_pattern: "FROM diegosouzapw/omniroute:v.*"
+      matrix: ${{ fromJson(needs.compute-matrix.outputs.matrix) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v5
 
       - name: Update version files
-        if: inputs.addon == matrix.addon
         run: |
           VERSION="${{ inputs.version }}"
           IMAGE_NAME=$(echo "${{ matrix.image_pattern }}" | sed 's/FROM //;s/:.*//')
@@ -50,7 +54,6 @@ jobs:
           sed -i "s|${{ matrix.image_pattern }}|FROM ${IMAGE_NAME}:${VERSION}|" ${{ matrix.dockerfile_path }}
 
       - name: Create Pull Request
-        if: inputs.addon == matrix.addon
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "Bump ${{ matrix.name }} version to ${{ inputs.version }}"
