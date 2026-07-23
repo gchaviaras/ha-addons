@@ -29,6 +29,12 @@ jobs:
           echo "patch=${patch}" >> $GITHUB_OUTPUT
           echo "minor=${patch%.*}" >> $GITHUB_OUTPUT
           echo "major=${patch%.*.*}" >> $GITHUB_OUTPUT
+      - name: Extract version from config.yaml
+        id: config_version
+        shell: bash
+        run: |-
+          VERSION=$(yq '.version' ./music_assistant_beta/config.yaml)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
       - name: Build and Push release
         uses: docker/build-push-action@v6.18.0
         with:
@@ -36,5 +42,5 @@ jobs:
           file: ./music_assistant_beta/Dockerfile
           platforms: linux/amd64,linux/arm64
           tags: |-
-            ghcr.io/${{ github.repository_owner }}/mass-server:2.10.0b2
+            ghcr.io/${{ github.repository_owner }}/mass-server:${{ steps.config_version.outputs.version }}
           push: true
