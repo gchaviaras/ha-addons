@@ -2,15 +2,26 @@ name: OmniRoute
 version: 3.8.46
 slug: omniroute
 description: Free AI Gateway - one endpoint, 250+ providers
-url: https://github.com/diegoasanch/omniroute
+url: https://github.com/diegosouzapw/OmniRoute
 arch:
 - amd64
 - armv7
 - aarch64
-ports:
-  20128/tcp: 20128
+homeassistant_api: true
+auth_api: true
+host_network: false
+ingress: true
+ingress_port: 20128
+panel_icon: mdi:router-network
+panel_title: OmniRoute
+panel_admin: true
+uart: false
 map:
 - data:rw
+init: false
+advanced: false
+stage: stable
+tmpfs: false
 options:
   omniroute_memory_mb: 1024
 schema:
