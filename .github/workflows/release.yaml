@@ -25,7 +25,6 @@ jobs:
             config_path: omniroute/config.yaml
             dockerfile_path: omniroute/Dockerfile
             image_name: omniroute
-            build_args: ""
       fail-fast: false
     steps:
       - uses: actions/checkout@v5
@@ -54,7 +53,8 @@ jobs:
           file: ./${{ matrix.dockerfile_path }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            ${{ matrix.build_args }}
+            MASS_VERSION=${{ steps.config_version.outputs.version }}
+            OMNIROUTE_VERSION=${{ steps.config_version.outputs.version }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}:${{ steps.config_version.outputs.version }}
           push: true
