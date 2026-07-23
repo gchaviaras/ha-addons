@@ -7,42 +7,54 @@ on:
 
 jobs:
   build-and-push-container-image:
-    name: Builds and pushes containers to ghcr.io
+    name: Build ${{ matrix.name }} container
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    strategy:
+      matrix:
+        include:
+          - addon: music_assistant_beta
+            name: Music Assistant
+            config_path: music_assistant_beta/config.yaml
+            dockerfile_path: music_assistant_beta/Dockerfile
+            image_name: mass-server
+            build_args: MASS_VERSION=${{ github.event.release.tag_name }}
+          - addon: omniroute
+            name: OmniRoute
+            config_path: omniroute/config.yaml
+            dockerfile_path: omniroute/Dockerfile
+            image_name: omniroute
+            build_args: ""
+      fail-fast: false
     steps:
       - uses: actions/checkout@v5
+
       - name: Log in to the GitHub container registry
         uses: docker/login-action@v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.11.1
-      - name: Version number for tags
-        id: tags
-        shell: bash
-        run: |-
-          patch=${GITHUB_REF#refs/*/}
-          echo "patch=${patch}" >> $GITHUB_OUTPUT
-          echo "minor=${patch%.*}" >> $GITHUB_OUTPUT
-          echo "major=${patch%.*.*}" >> $GITHUB_OUTPUT
+
       - name: Extract version from config.yaml
         id: config_version
         shell: bash
-        run: |-
-          VERSION=$(yq '.version' ./music_assistant_beta/config.yaml)
+        run: |
+          VERSION=$(yq '.version' ./${{ matrix.config_path }})
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Build and Push release
         uses: docker/build-push-action@v6.18.0
         with:
-          context: ./music_assistant_beta/
-          file: ./music_assistant_beta/Dockerfile
+          context: ./${{ matrix.addon }}/
+          file: ./${{ matrix.dockerfile_path }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            MASS_VERSION=${{ steps.config_version.outputs.version }}
-          tags: |-
-            ghcr.io/${{ github.repository_owner }}/mass-server:${{ steps.config_version.outputs.version }}
+            ${{ matrix.build_args }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}:${{ steps.config_version.outputs.version }}
           push: true
