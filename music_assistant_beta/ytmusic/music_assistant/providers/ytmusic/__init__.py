@@ -134,7 +134,6 @@ YT_PERSONAL_PLAYLISTS = (
     "RDTMAK5uy_mZtXeU08kxXJOUhL0ETdAuZTh1z7aAFAo",  # Archive Mix
 )
 DYNAMIC_PLAYLIST_TRACK_LIMIT = 300
-YTM_PREMIUM_CHECK_TRACK_ID = "dQw4w9WgXcQ"
 PACKAGES_TO_INSTALL = ("yt-dlp[default]", "bgutil-ytdlp-pot-provider")
 DEFAULT_STREAM_URL_EXPIRATION = 3600  # 1 hour
 
@@ -222,8 +221,6 @@ class YoutubeMusicProvider(RecommendationPayloadMixin, MusicProvider):
                 break
         else:
             self.language = "en"
-        if not await self._user_has_ytm_premium():
-            raise LoginFailed("User does not have Youtube Music Premium")
 
     # the checksum invalidates entries cached before the search was pinned to English
     @use_cache(3600 * 24 * 7, cache_checksum="english_search_v1")  # Cache for 7 days
@@ -1219,13 +1216,6 @@ class YoutubeMusicProvider(RecommendationPayloadMixin, MusicProvider):
         except (ClientError, TimeoutError) as err:
             self.logger.debug("PO Token server ping failed: %s", err)
             return False
-
-    async def _user_has_ytm_premium(self) -> bool:
-        """Check if the user has Youtube Music Premium."""
-        stream_format = await self._get_stream_format(YTM_PREMIUM_CHECK_TRACK_ID)
-        # Only premium users can stream the HQ stream of this song
-        format_id: str = stream_format["format_id"]
-        return format_id == "141"
 
     def _parse_thumbnails(self, thumbnails_obj: list[dict[str, Any]]) -> UniqueList[MediaItemImage]:
         """Parse and YTM thumbnails to MediaItemImage."""
