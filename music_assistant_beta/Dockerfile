@@ -1,4 +1,4 @@
-ARG MASS_VERSION=2.11.0b2
+ARG MASS_VERSION=2.11.0b8
 FROM ghcr.io/music-assistant/server:${MASS_VERSION}
 
 ENV UV_PRERELEASE=allow
